@@ -79,67 +79,46 @@ app.get('/admin/check', (req, res) => {
 // 需要管理员权限的路由
 app.use('/admin/*', requireAdmin);
 
-// 清理上传文件夹
-const cleanUploadFolder = () => {
+// 清理上传文件夹的函数
+const cleanUploads = () => {
     const uploadDir = path.join(__dirname, '../uploads');
+    const files = fs.readdirSync(uploadDir);
 
-    // 如果文件夹不存在，创建它
+    const now = Date.now();
+    files.forEach(file => {
+        // 跳过 .gitkeep 文件
+        if (file === '.gitkeep') return;
+
+        const filePath = path.join(uploadDir, file);
+        const stats = fs.statSync(filePath);
+
+        // 如果文件超过10分钟就删除
+        if (now - stats.ctimeMs > 10 * 60 * 1000) {
+            fs.unlinkSync(filePath);
+        }
+    });
+};
+
+// 启动时清理文件夹（排除.gitkeep）
+const initUploads = () => {
+    const uploadDir = path.join(__dirname, '../uploads');
     if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-        return;
+        fs.mkdirSync(uploadDir);
     }
 
-    // 删除文件夹中的所有文件
-    fs.readdir(uploadDir, (err, files) => {
-        if (err) {
-            console.error('读取上传文件夹失败:', err);
-            return;
-        }
-
-        for (const file of files) {
-            fs.unlink(path.join(uploadDir, file), err => {
-                if (err) console.error('删除文件失败:', err);
-            });
+    const files = fs.readdirSync(uploadDir);
+    files.forEach(file => {
+        if (file !== '.gitkeep') {
+            fs.unlinkSync(path.join(uploadDir, file));
         }
     });
 };
 
-// 定期清理过期文件
-const cleanExpiredFiles = () => {
-    const uploadDir = path.join(__dirname, '../uploads');
-    const expirationTime = 10 * 60 * 1000; // 10分钟
+// 初始化上传目录
+initUploads();
 
-    fs.readdir(uploadDir, (err, files) => {
-        if (err) {
-            console.error('读取上传文件夹失败:', err);
-            return;
-        }
-
-        const now = Date.now();
-        files.forEach(file => {
-            const filePath = path.join(uploadDir, file);
-            fs.stat(filePath, (err, stats) => {
-                if (err) {
-                    console.error('获取文件状态失败:', err);
-                    return;
-                }
-
-                if (now - stats.mtimeMs > expirationTime) {
-                    fs.unlink(filePath, err => {
-                        if (err) console.error('删除过期文件失败:', err);
-                        else console.log('已删除过期文件:', file);
-                    });
-                }
-            });
-        });
-    });
-};
-
-// 启动时清理文件夹
-cleanUploadFolder();
-
-// 每分钟检查一次过期文件
-setInterval(cleanExpiredFiles, 60 * 1000);
+// 每10分钟清理一次文件
+setInterval(cleanUploads, 10 * 60 * 1000);
 
 // 添加文件名编码处理函数
 function encodeFileName(fileName) {

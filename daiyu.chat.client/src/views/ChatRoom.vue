@@ -1,8 +1,16 @@
 <template>
   <div class="chat-room" 
        @drop.prevent="handleDrop"
-       @dragover.prevent
-       @dragenter.prevent>
+       @dragover.prevent="handleDragOver"
+       @dragleave.prevent="handleDragLeave"
+       @dragenter.prevent="handleDragEnter">
+    <div class="upload-overlay" v-show="isDragging">
+      <div class="upload-tip">
+        <el-icon class="upload-icon"><Upload /></el-icon>
+        <span>释放鼠标上传文件</span>
+      </div>
+    </div>
+
     <div class="chat-container">
       <div class="chat-header">
         <h2>在线聊天室</h2>
@@ -56,12 +64,14 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { io } from 'socket.io-client';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Plus } from '@element-plus/icons-vue';
+import { Plus, Upload } from '@element-plus/icons-vue';
 
 const socket = ref(null);
 const messages = ref([]);
 const inputMessage = ref('');
 const messagesContainer = ref(null);
+const isDragging = ref(false);
+const dragCounter = ref(0);
 
 // 辅助函数：从完整ID中提取短ID
 const getShortId = (fullId) => {
@@ -145,11 +155,33 @@ const handleFileUpload = async (file) => {
   return false;
 };
 
-// 添加拖拽处理函数
+const handleDragEnter = (e) => {
+  e.preventDefault();
+  dragCounter.value++;
+  if (dragCounter.value === 1) {
+    isDragging.value = true;
+  }
+};
+
+const handleDragLeave = (e) => {
+  e.preventDefault();
+  dragCounter.value--;
+  if (dragCounter.value === 0) {
+    isDragging.value = false;
+  }
+};
+
+const handleDragOver = (e) => {
+  e.preventDefault();
+};
+
 const handleDrop = (e) => {
+  e.preventDefault();
+  dragCounter.value = 0;
+  isDragging.value = false;
   const files = e.dataTransfer.files;
   if (files.length > 0) {
-    const file = files[0];  // 只处理第一个文件
+    const file = files[0];
     handleFileUpload(file);
   }
 };
@@ -326,6 +358,38 @@ onUnmounted(() => {
 }
 
 .own-message :deep(a:visited) {
+  color: #409EFF;
+}
+
+/* 添加遮罩层样式 */
+.upload-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(24, 144, 255, 0.1);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+.upload-tip {
+  background-color: white;
+  padding: 30px 50px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.upload-icon {
+  font-size: 48px;
   color: #409EFF;
 }
 </style> 

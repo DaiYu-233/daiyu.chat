@@ -1,6 +1,6 @@
 node_modules
 # 忽略 uploads 文件夹中的所有文件
-uploads/*
+daiyu.chat.server/uploads/*
 
 # 但是保留 uploads 文件夹本身
-!uploads/.gitkeep
+!daiyu.chat.server/uploads/.gitkeep
