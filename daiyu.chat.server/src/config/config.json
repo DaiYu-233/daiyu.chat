@@ -1,0 +1,12 @@
+{
+    "server": {
+        "port": 3030,
+        "host": "localhost"
+    },
+    "client": {
+        "url": "http://localhost:5173"
+    },
+    "admin": {
+        "password": "123456"
+    }
+}

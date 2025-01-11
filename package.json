@@ -1,0 +1,15 @@
+{
+    "name": "daiyu-chat",
+    "version": "1.0.0",
+    "description": "局域网聊天应用",
+    "scripts": {
+        "install-all": "concurrently \"cd daiyu.chat.client && npm install\" \"cd daiyu.chat.server && npm install\"",
+        "client": "cd daiyu.chat.client && npm run dev",
+        "server": "cd daiyu.chat.server && npm run server",
+        "dev": "concurrently \"npm run server\" \"npm run client\"",
+        "build": "cd daiyu.chat.client && npm run build"
+    },
+    "devDependencies": {
+        "concurrently": "^8.0.1"
+    }
+}
